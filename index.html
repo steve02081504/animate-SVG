@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html data-theme="dark">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SVG Animator</title>
+	<link href="https://cdn.jsdelivr.net/npm/daisyui/dist/full.css" rel="stylesheet" type="text/css" />
+	<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="flex flex-col justify-center items-center min-h-screen bg-base-200 p-4">
+
+	<div class="max-w-4xl w-full">
+		<h1 class="text-4xl font-bold text-center mb-2">SVG Animator</h1>
+		<a href="https://github.com/steve02081504/animate-SVG" target="_blank" class="text-center text-sm text-blue-500 hover:underline mb-6 block">https://github.com/steve02081504/animate-SVG</a>
+
+		<div class="card bg-base-100 shadow-xl mb-8">
+			<div class="card-body">
+				<h2 class="card-title">Controls</h2>
+				<div class="flex flex-wrap gap-4 items-center">
+					<input type="file" id="file-input" accept=".svg" class="file-input file-input-bordered w-full max-w-xs" />
+					<button id="play-button" class="btn btn-primary" disabled>Play Animation</button>
+					<button id="download-button" class="btn btn-secondary" disabled>Download SVG</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="svg-container" class="card bg-base-100 shadow-xl">
+			<div class="card-body items-center justify-center min-h-[300px]">
+			</div>
+		</div>
+	</div>
+
+	<script type="module">
+		import { animateSVG, exportAnimatedSVG } from './index.mjs'
+
+		const fileInput = document.getElementById('file-input')
+		const playButton = document.getElementById('play-button')
+		const downloadButton = document.getElementById('download-button')
+		const svgContainer = document.getElementById('svg-container')
+
+		let currentSvgElement = null
+
+		function loadSvg(svgText) {
+			svgContainer.innerHTML = svgText
+			currentSvgElement = svgContainer.querySelector('svg')
+
+			if (currentSvgElement) {
+				// Set a reasonable size for preview
+				currentSvgElement.style.width = '100%'
+				currentSvgElement.style.height = 'auto'
+
+				animateSVG(currentSvgElement)
+				playButton.disabled = false
+				downloadButton.disabled = false
+			} else {
+				svgContainer.innerHTML = '<p class="text-error">Could not find an SVG element in the provided content.</p>'
+				playButton.disabled = true
+				downloadButton.disabled = true
+			}
+		}
+
+		async function loadDefaultSvg() {
+			const defaultSvgUrl = 'https://steve02081504.github.io/fount/imgs/repo-img.svg'
+			try {
+				const response = await fetch(defaultSvgUrl)
+				if (!response.ok)
+					throw new Error(`HTTP error! status: ${response.status}`)
+
+				const svgText = await response.text()
+				loadSvg(svgText)
+			} catch (error) {
+				console.error('Failed to load default SVG:', error)
+				svgContainer.innerHTML = '<p class="text-error">Could not load default SVG. Please select a file.</p>'
+			}
+		}
+
+		fileInput.addEventListener('change', (event) => {
+			const file = event.target.files[0]
+			if (!file) return
+
+			const reader = new FileReader()
+			reader.onload = (e) => {
+				const svgText = e.target.result
+				loadSvg(svgText)
+			}
+			reader.readAsText(file)
+		})
+
+		playButton.addEventListener('click', () => {
+			if (currentSvgElement) {
+				// Clone and replace to restart CSS animation reliably
+				const newSvg = currentSvgElement.cloneNode(true)
+				currentSvgElement.replaceWith(newSvg)
+				currentSvgElement = newSvg
+				animateSVG(currentSvgElement)
+			}
+		})
+
+		downloadButton.addEventListener('click', () => {
+			if (currentSvgElement) {
+				const svgString = exportAnimatedSVG(currentSvgElement)
+				const blob = new Blob([svgString], { type: 'image/svg+xml' })
+				const url = URL.createObjectURL(blob)
+				const a = document.createElement('a')
+				a.href = url
+				a.download = 'animated.svg'
+				document.body.appendChild(a)
+				a.click()
+				document.body.removeChild(a)
+				URL.revokeObjectURL(url)
+			}
+		})
+
+		// Load the default SVG when the page loads
+		loadDefaultSvg()
+	</script>
+</body>
+
+</html>
