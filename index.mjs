@@ -74,7 +74,7 @@ function insertAnimationStyles(svgElement, config) {
 	const styleHTML = `
 .animate-svg path {
 	animation: draw ease-in-out forwards;
-	stroke: #000;
+	stroke: currentColor;
 }
 .animate-svg {
 	animation: fill-opacity ${config.animationDuration}s ease-in-out forwards;
