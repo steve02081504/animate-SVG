@@ -81,17 +81,17 @@ function insertAnimationStyles(svgElement, config) {
 }
 @keyframes draw {
 	100% {
-	stroke-dashoffset: 0;
+		stroke-dashoffset: 0;
 	}
 }
 @keyframes fill-opacity {
 	0%, 70% {
-	fill-opacity: 0;
-	stroke-width: ${config.lineThickness}%;
+		fill-opacity: 0;
+		stroke-width: ${config.lineThickness}%;
 	}
 	100% {
-	fill-opacity: 1;
-	stroke-width: 0;
+		fill-opacity: 1;
+		stroke-width: 0;
 	}
 }
 `
