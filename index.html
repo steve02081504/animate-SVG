@@ -5,8 +5,8 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>SVG Animator</title>
-	<link href="https://cdn.jsdelivr.net/npm/daisyui/dist/full.css" rel="stylesheet" type="text/css" />
-	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://cdn.jsdelivr.net/npm/daisyui/daisyui.css" rel="stylesheet" type="text/css" crossorigin="anonymous" />
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" crossorigin="anonymous"></script>
 </head>
 
 <body class="flex flex-col justify-center items-center min-h-screen bg-base-200 p-4">
@@ -42,6 +42,11 @@
 
 		let currentSvgElement = null
 
+		/**
+		 * Loads SVG text into the container, animates it, and enables control buttons.
+		 * @param {string} svgText The SVG content as a string.
+		 * @returns {void}
+		 */
 		function loadSvg(svgText) {
 			svgContainer.innerHTML = svgText
 			currentSvgElement = svgContainer.querySelector('svg')
@@ -61,13 +66,15 @@
 			}
 		}
 
+		/**
+		 * Fetches and loads the default SVG from a URL.
+		 * @returns {Promise<void>} A promise that resolves when the default SVG is loaded.
+		 */
 		async function loadDefaultSvg() {
 			const defaultSvgUrl = 'https://steve02081504.github.io/fount/imgs/repo-img.svg'
 			try {
 				const response = await fetch(defaultSvgUrl)
-				if (!response.ok)
-					throw new Error(`HTTP error! status: ${response.status}`)
-
+				if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 				const svgText = await response.text()
 				loadSvg(svgText)
 			} catch (error) {
@@ -77,40 +84,43 @@
 		}
 
 		fileInput.addEventListener('change', (event) => {
-			const file = event.target.files[0]
+			const [file] = event.target.files
 			if (!file) return
 
 			const reader = new FileReader()
+			/**
+			 * Handles the file reader load event.
+			 * @param {ProgressEvent<FileReader>} e The load event.
+			 * @returns {void}
+			 */
 			reader.onload = (e) => {
-				const svgText = e.target.result
+				const { result: svgText } = e.target
 				loadSvg(svgText)
 			}
 			reader.readAsText(file)
 		})
 
-		playButton.addEventListener('click', () => {
-			if (currentSvgElement) {
-				// Clone and replace to restart CSS animation reliably
-				const newSvg = currentSvgElement.cloneNode(true)
-				currentSvgElement.replaceWith(newSvg)
-				currentSvgElement = newSvg
-				animateSVG(currentSvgElement)
-			}
+		playButton.addEventListener('click', async () => {
+			if (!currentSvgElement) return
+			// Clone and replace to restart CSS animation reliably
+			const newSvg = currentSvgElement.cloneNode(true)
+			currentSvgElement.replaceWith(newSvg)
+			currentSvgElement = newSvg
+			await animateSVG(currentSvgElement)
 		})
 
-		downloadButton.addEventListener('click', () => {
-			if (currentSvgElement) {
-				const svgString = exportAnimatedSVG(currentSvgElement)
-				const blob = new Blob([svgString], { type: 'image/svg+xml' })
-				const url = URL.createObjectURL(blob)
-				const a = document.createElement('a')
-				a.href = url
-				a.download = 'animated.svg'
-				document.body.appendChild(a)
-				a.click()
-				document.body.removeChild(a)
-				URL.revokeObjectURL(url)
-			}
+		downloadButton.addEventListener('click', async () => {
+			if (!currentSvgElement) return
+			const svgString = await exportAnimatedSVG(currentSvgElement)
+			const blob = new Blob([svgString], { type: 'image/svg+xml' })
+			const url = URL.createObjectURL(blob)
+			const a = document.createElement('a')
+			a.href = url
+			a.download = 'animated.svg'
+			document.body.appendChild(a)
+			a.click()
+			document.body.removeChild(a)
+			URL.revokeObjectURL(url)
 		})
 
 		// Load the default SVG when the page loads
